@@ -1,0 +1,33 @@
+{
+  "name": "git-calender",
+  "version": "0.0.0",
+  "description": "",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib/**/*"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "ava",
+    "npm-publish": "npm run build && npm publish --access=public"
+  },
+  "ava": {
+    "extensions": [
+      "ts"
+    ],
+    "require": [
+      "ts-node/register"
+    ]
+  },
+  "keywords": [
+    "git calender"
+  ],
+  "author": "Harcop Toluwap",
+  "license": "ISC",
+  "devDependencies": {
+    "ava": "^5.2.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9.5"
+  }
+}
