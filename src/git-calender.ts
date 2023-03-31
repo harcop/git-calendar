@@ -1,3 +1,5 @@
+import {isToday, addDays, subtractDays, lessThanToday} from './helpers'
+
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', "Jul", "Aug", 'Sep', 'Oct', 'Nov', 'Dec']
 
 class MonthShape {
@@ -12,62 +14,73 @@ class MonthShape {
 }
 
 type SetMonthObjProps = {
-  startMonth: number;
+  clientDate: Date;
   monthContainers: any[],
-  isFullYear: boolean
 }
 
 type MonthElementsProp = {
   [key: string]: MonthShape
 }
 
-export function setMonthObj ({startMonth, monthContainers, isFullYear=false}: SetMonthObjProps) {
+export function setMonthObj ({clientDate, monthContainers}: SetMonthObjProps) {
   const monthElements: MonthElementsProp = {}
   const tempMonth = [...months]
+
+  let isFullYear = monthContainers.length === 12
+  const startMonth = isFullYear ? 1 : clientDate.getMonth() + 1
+
   if(!isFullYear) {
     tempMonth.push(...tempMonth.splice(0,startMonth-1), tempMonth[0])
   }
-  console.log(tempMonth)
+
   for(let i = 0; i < tempMonth.length; i++) {
     const month = tempMonth[i]
     monthElements[`${month}-${i}`] =  new MonthShape(month)
     monthElements[`${month}-${i}`].weekArray = monthContainers[i]
   }
+
   return monthElements
 }
 
-type SortDaysIntoTableProp = {
-  startFrom: string;
-  isFullYear: boolean
+export function sortDaysIntoTable(monthElements: MonthElementsProp) {
+  let tableHeaders = [''] // init with empty space for the week column
+  let tableElements: string[][] = [
+    ['Sun'],['Mon'],['Tue'],['Wed'],['Thur'],['Fri'],['Sat']
+  ];
+  for(const monthObj in monthElements) {
+    const month = monthElements[monthObj]
+    const weekArray = month.weekArray
+    tableHeaders.push(`${month.name}#${month.weeksLength}`)
+    for(const week of weekArray) {
+      for(let j = 0; j < week.length; j++) {
+        tableElements[j].push(week[j])
+      }
+    }
+  }
+
+  return {
+    tableHeaders,
+    tableElements
+  }
+}
+
+type RenderTableProp = {
+  clientDate: Date,
+  whichYear: number,
+  isFullYear: boolean,
   isTodayChecked: boolean,
 }
 
-// export function sortDaysIntoTable({startFrom = '2022, 01, 01', isTodayChecked=false, isFullYear=false}: SortDaysIntoTableProp) {
-//   const startMonth = Number(startFrom.split(',')[1])
-//   const monthContainers = fillMonth({startFrom, isTodayChecked, isFullYear})
-//   const monthElements = setMonthObj({startMonth, monthContainers, isFullYear})
-//   let tableHeaders = []
-//   let tableElements: string[][] = [
-//     [],[],[],[],[],[],[]
-//   ];
-//   for(const monthObj in monthElements) {
-//     const month = monthElements[monthObj]
-//     console.log(month.name, monthObj)
-//     const weekArray = month.weekArray
-//     tableHeaders.push(`${month.name}#${month.weeksLength}`)
-//     for(const week of weekArray) {
-//       for(let j = 0; j < week.length; j++) {
-//         tableElements[j].push(week[j])
-//       }
-//     }
-//   }
-//   return {
-//     tableHeaders,
-//     tableElements
-//   }
-// }
+export function renderTable({clientDate, whichYear = 2022, isTodayChecked=false, isFullYear=false}: RenderTableProp) {
+  const monthContainers = fillMonth({clientDate, whichYear, isTodayChecked, isFullYear})
+
+  const monthElements = setMonthObj({clientDate, monthContainers})
+
+  return sortDaysIntoTable(monthElements)
+}
 
 type FillMonthProp = {
+  clientDate: Date,
   whichYear: number,
   isFullYear?: boolean,
   isTodayChecked?: boolean,
@@ -84,8 +97,11 @@ type FillMonthProp = {
 // 2022, isFullYear = JAN - DEC - 12
 // 2022, !isFullYear = JAN - DEC - 12
 
-export function fillMonth({whichYear, isFullYear, isTodayChecked, isTest}: FillMonthProp): Array<any> {
-  let currentDate = new Date()
+export function fillMonth({clientDate, whichYear, isFullYear, isTodayChecked, isTest}: FillMonthProp): Array<any> {
+  // Because of timezone difference btw the server and the client, it's better to use the client date since we want to display the calander based on the client date
+
+  let currentDate = clientDate
+
   let currentYear = currentDate.getFullYear();
   let isCurrentYear = currentYear === whichYear
 
@@ -145,18 +161,18 @@ export function fillMonth({whichYear, isFullYear, isTodayChecked, isTest}: FillM
       let paintMe = 0;
 
       if(!isTest) {
-        if(isToday(date)) {
+        if(isToday(date, clientDate)) {
           if(isTodayChecked) {
             paintMe = 1
           }
-        }else if(lessThanToday(todayDate)) {
+        }else if(lessThanToday(todayDate, clientDate)) {
           paintMe = Math.floor(Math.random() * 9) + 1
         }
       }
 
       weekArray[dayNumber] = `${date.toDateString()}#${dayOfMonth}#${paintMe}`
 
-      if(isToday(date) && month_month) {
+      if(isToday(date, clientDate) && month_month) {
         innerBreak = true
         break;
       }
@@ -181,47 +197,3 @@ export function fillMonth({whichYear, isFullYear, isTodayChecked, isTest}: FillM
   }
   return container
 }
-
-export function isToday(date: Date) {
-  return date.toDateString() === new Date().toDateString()
-}
-
-export function addDays(date: Date, days: number) {
-  let result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-}
-
-export function subtractDays(date: Date, days: number) {
-  let result = new Date(date);
-  result.setDate(result.getDate() - days);
-  return result;
-}
-
-export function subtractYears(date: Date, years: number) {
-  let result = new Date(date);
-  result.setFullYear(result.getFullYear() - years);
-  return result;
-}
-
-export function addYears(date: Date, years: number) {
-  let result = new Date(date);
-  result.setFullYear(result.getFullYear() + years);
-  return result;
-}
-
-export function lessThanToday(date: Date) {
-  return new Date() >= date
-}
-
-export function greaterThanToday(date: Date) {
-  return date >= new Date()
-}
-
-// sortDaysIntoTable({startFrom: '2023, 01, 01', isTodayChecked: false, isFullYear: true})
-// console.log(fillMonth({whichYear:2023, isFullYear:false, isTodayChecked:false}));
-
-
-// it should show Jan - Dec if fullYear and no extra year
-// it should show Mar - Mar if not fullYear from last year to current year
-// it should show fullYear for any other year even if fullYear is false

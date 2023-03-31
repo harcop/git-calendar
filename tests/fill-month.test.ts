@@ -1,39 +1,10 @@
 import test from 'ava';
-import { lessThanToday, subtractDays, addDays, isToday, fillMonth, addYears, subtractYears } from '../src/git-calender';
+import { fillMonth } from '../src/git-calender';
+import { subtractYears } from '../src/helpers';
 
-test('should return true if date is less than today', t => {
-  let todayDate = new Date('2022, 01, 01')
-  t.is(lessThanToday(todayDate), true)
-})
-
-test('should return false if date is not less than today', t => {
-  let todayDate = new Date('2024, 01, 01')
-  t.is(lessThanToday(todayDate), false)
-})
-
-test('should subtract 1 day from date', t => {
-  let date = new Date('2024, 01, 02')
-  let expectedDate = new Date('2024, 01, 01')
-  t.deepEqual(subtractDays(date, 1), expectedDate)
-})
-
-test('should add 1 day from date', t => {
-  let date = new Date('2024, 01, 02')
-  let expectedDate = new Date('2024, 01, 03')
-  t.deepEqual(addDays(date, 1), expectedDate)
-})
-
-test('should return true if date is today', t => {
-  let date = new Date()
-  t.deepEqual(isToday(date), true)
-})
-
-test('should return false if date is not today', t => {
-  let date = new Date('2022, 01, 01')
-  t.deepEqual(isToday(date), false)
-})
 
 test('should return only the days of the year in array container if it is full year and if year is not the current year', t => {
+  let clientDate = new Date();
   let whichYear = 2021;
   let isTest = true;
   const expected = [
@@ -531,19 +502,28 @@ test('should return only the days of the year in array container if it is full y
     ]
   ]
 ]
-  t.deepEqual(fillMonth({whichYear, isFullYear:true, isTest}), expected)
-  t.deepEqual(fillMonth({whichYear, isFullYear: false, isTest}), expected)
+  const fullYearContainers = fillMonth({clientDate, whichYear, isFullYear: true, isTest})
+
+  t.is(fullYearContainers.length, 12)
+  t.deepEqual(fullYearContainers, expected)
+
+  const notFullYearContainers = fillMonth({clientDate, whichYear, isFullYear: false, isTest})
+
+  t.is(notFullYearContainers.length, 12)
+  t.deepEqual(notFullYearContainers, expected)
+
+  t.deepEqual(fullYearContainers, notFullYearContainers)
 })
 
 test('should return month to month days', t => {
-  let now = new Date()
-  let whichYear = now.getFullYear();
+  let clientDate = new Date()
+  let whichYear = clientDate.getFullYear();
 
-  let date = new Date(`${whichYear}, ${now.getMonth() + 1}, ${now.getDate()}`)
+  let date = new Date(`${whichYear}, ${clientDate.getMonth() + 1}, ${clientDate.getDate()}`)
   let subYear = subtractYears(date, 1);
 
   let isTest = true;
-  const containers = fillMonth({whichYear, isTest})
+  const containers = fillMonth({clientDate, whichYear, isTest})
   const firstMonthContainer = containers[0];
   const firstWeekContainer = firstMonthContainer[0];
 
@@ -558,15 +538,17 @@ test('should return month to month days', t => {
 })
 
 test('should return days in array container and today is checked if isTodayChecked is true', t => {
-  let todayDate = new Date();
-  let whichYear = todayDate.getFullYear()
+  let clientDate = new Date();
+  let whichYear = clientDate.getFullYear()
   let isTodayChecked = true;
 
-  const expectedToday = `${todayDate.toDateString()}#${new Date().getDate()}#1`
+  const expectedToday = `${clientDate.toDateString()}#${new Date().getDate()}#1`
 
-  const containers = fillMonth({whichYear, isTodayChecked})
+  const containers = fillMonth({clientDate, whichYear, isTodayChecked})
   const lastMonthContainer = containers[containers.length - 1];
   const lastWeekContainer = lastMonthContainer[lastMonthContainer.length - 1]
+
+  t.is(containers.length, 13)
 
   t.is(lastWeekContainer.includes(expectedToday), true)
 })

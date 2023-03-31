@@ -1,7 +1,7 @@
 {
   "name": "git-calender",
   "version": "0.0.0",
-  "description": "",
+  "description": "this package allows you to render yearly activities like github",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "files": [
@@ -29,5 +29,6 @@
     "ava": "^5.2.0",
     "ts-node": "^10.9.1",
     "typescript": "^4.9.5"
-  }
+  },
+  "dependencies": {}
 }
