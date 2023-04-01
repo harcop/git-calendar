@@ -16,22 +16,23 @@ class MonthShape {
 type SetMonthObjProps = {
   clientDate: Date;
   monthContainers: any[],
+  isFullYear: boolean
 }
 
 type MonthElementsProp = {
   [key: string]: MonthShape
 }
 
-export function setMonthObj ({clientDate, monthContainers}: SetMonthObjProps) {
+export function setMonthObj ({clientDate, monthContainers, isFullYear}: SetMonthObjProps) {
   const monthElements: MonthElementsProp = {}
   const tempMonth = [...months]
 
-  let isFullYear = monthContainers.length === 12
   const startMonth = isFullYear ? 1 : clientDate.getMonth() + 1
 
   if(!isFullYear) {
     tempMonth.push(...tempMonth.splice(0,startMonth-1), tempMonth[0])
   }
+  tempMonth.splice(monthContainers.length)
 
   for(let i = 0; i < tempMonth.length; i++) {
     const month = tempMonth[i]
@@ -39,6 +40,7 @@ export function setMonthObj ({clientDate, monthContainers}: SetMonthObjProps) {
     monthElements[`${month}-${i}`].weekArray = monthContainers[i]
   }
 
+  // console.log(JSON.stringify(monthElements, null, 2))
   return monthElements
 }
 
@@ -67,14 +69,14 @@ export function sortDaysIntoTable(monthElements: MonthElementsProp) {
 type RenderTableProp = {
   clientDate: Date,
   whichYear: number,
-  isFullYear: boolean,
-  isTodayChecked: boolean,
+  isFullYear?: boolean,
+  isTodayChecked?: boolean,
 }
 
 export function renderTable({clientDate, whichYear = 2022, isTodayChecked=false, isFullYear=false}: RenderTableProp) {
-  const monthContainers = fillMonth({clientDate, whichYear, isTodayChecked, isFullYear})
+  const {container: monthContainers, isFullYear: _ifFullYear} = fillMonth({clientDate, whichYear, isTodayChecked, isFullYear})
 
-  const monthElements = setMonthObj({clientDate, monthContainers})
+  const monthElements = setMonthObj({clientDate, monthContainers, isFullYear: _ifFullYear})
 
   return sortDaysIntoTable(monthElements)
 }
@@ -97,7 +99,11 @@ type FillMonthProp = {
 // 2022, isFullYear = JAN - DEC - 12
 // 2022, !isFullYear = JAN - DEC - 12
 
-export function fillMonth({clientDate, whichYear, isFullYear, isTodayChecked, isTest}: FillMonthProp): Array<any> {
+type fillMonthReturn = {
+  container: Array<any>,
+  isFullYear: boolean
+}
+export function fillMonth({clientDate, whichYear, isFullYear, isTodayChecked, isTest}: FillMonthProp): fillMonthReturn {
   // Because of timezone difference btw the server and the client, it's better to use the client date since we want to display the calander based on the client date
 
   let currentDate = clientDate
@@ -111,11 +117,11 @@ export function fillMonth({clientDate, whichYear, isFullYear, isTodayChecked, is
 
   let month_month = !isFullYear
 
-  let startFromYear = `${isFullYear ? whichYear : whichYear - 1}, 01, 01`
+  let startFromYear = `${whichYear}, 01, 01`
   
-  if(!isFullYear) {
+  if(month_month) {
     // start month-month from current date
-    startFromYear = `${isFullYear ? whichYear : whichYear - 1}, ${currentDate.getMonth() + 1}, ${currentDate.getDate()}`
+    startFromYear = `${whichYear - 1}, ${currentDate.getMonth() + 1}, ${currentDate.getDate()}`
   }
 
   let container = []
@@ -124,16 +130,23 @@ export function fillMonth({clientDate, whichYear, isFullYear, isTodayChecked, is
 
   let dayNumber = date.getDay()
 
-  if(dayNumber > 0 && !isFullYear) {
+  let initialMonth = date.getMonth()
+
+  if(dayNumber > 0 && month_month) {
     // it should start from sunday if week didn't start from sunday
     date = subtractDays(date, dayNumber)
   } 
 
   let month = date.getMonth()
+
+  let isMonthBackJump = month !== initialMonth; // if month goes back to last after subtracting days
+
+  // this will be true if isMonthBackJump is false; nothing will happen further if true
+  let isIgnoreFirstWeekBreakTreated = !isMonthBackJump // don't break to another month after first week
   
   let i = 0;
 
-  let totalMonths = 11
+  let totalMonths = 11 // 0-11; 12 months of the year
 
   // can only show month-month(Mar-Mar) for only current year 
   if(month_month) {
@@ -188,12 +201,22 @@ export function fillMonth({clientDate, whichYear, isFullYear, isTodayChecked, is
       container.push(monthContainer)
       break;
     }
-
-    if(entryMonth !== month){
-      i++
+    
+    if(entryMonth !== month && isIgnoreFirstWeekBreakTreated) {
+      // i++  
       container.push(monthContainer)
       monthContainer = []
+    } 
+    else if(!isIgnoreFirstWeekBreakTreated) {
+      isIgnoreFirstWeekBreakTreated = true
     }
   }
-  return container
+
+  return {
+    container,
+    isFullYear: isFullYear || false
+  }
 }
+
+
+// renderTable({clientDate: new Date(), whichYear: 2023})

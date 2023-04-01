@@ -1,5 +1,5 @@
 {
-  "name": "git-calender",
+  "name": "git-calendar",
   "version": "0.0.0",
   "description": "this package allows you to render yearly activities like github",
   "main": "lib/index.js",
@@ -21,7 +21,7 @@
     ]
   },
   "keywords": [
-    "git calender"
+    "git calendar"
   ],
   "author": "Harcop Toluwap",
   "license": "ISC",

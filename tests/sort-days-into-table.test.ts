@@ -1,13 +1,13 @@
 import test from 'ava'
-import { fillMonth, setMonthObj, sortDaysIntoTable } from '../src/git-calender';
+import { fillMonth, setMonthObj, sortDaysIntoTable } from '../src/table';
 
 test('should ', t => { 
   let clientDate = new Date('2023, 3, 31');
   let whichYear = 2023
 
-  const containers = fillMonth({clientDate, whichYear, isTest: true})
+  const {container, isFullYear} = fillMonth({clientDate, whichYear, isTest: true})
 
-  const monthElements = setMonthObj({clientDate, monthContainers:containers})
+  const monthElements = setMonthObj({clientDate, monthContainers:container, isFullYear})
 
   const result = sortDaysIntoTable(monthElements)
 

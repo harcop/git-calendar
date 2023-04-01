@@ -1,13 +1,13 @@
 import test from 'ava';
-import { setMonthObj, fillMonth } from '../src/git-calender';
+import { setMonthObj, fillMonth } from '../src/table';
 
 test('should return month elements', t => {
   let clientDate = new Date();
   let whichYear = 2021
 
-  const containers = fillMonth({clientDate, whichYear, isTest: true})
+  const {container, isFullYear} = fillMonth({clientDate, whichYear, isTest: true})
 
-  const monthElements = setMonthObj({clientDate, monthContainers:containers})
+  const monthElements = setMonthObj({clientDate, monthContainers:container, isFullYear})
 
   const expected = {
   "Jan-0": {
